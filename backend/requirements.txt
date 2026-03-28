@@ -1,0 +1,12 @@
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+pydantic==2.7.1
+supabase==2.4.3
+huggingface-hub==0.23.0
+scikit-learn==1.4.2
+xgboost==2.0.3
+numpy==1.26.4
+pandas==2.2.2
+python-dotenv==1.0.1
+requests==2.31.0
+beautifulsoup4==4.12.3

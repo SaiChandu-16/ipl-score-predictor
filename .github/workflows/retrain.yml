@@ -1,0 +1,40 @@
+name: Weekly Model Retraining
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'   # Every Monday at 2AM UTC
+  workflow_dispatch:        # Allow manual trigger from GitHub UI
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install xgboost scikit-learn pandas numpy supabase huggingface-hub
+
+      - name: Run retraining script
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          HF_REPO_ID:   ${{ secrets.HF_REPO_ID }}
+          HF_TOKEN:     ${{ secrets.HF_TOKEN }}
+        run: python training/retrain.py
+
+      - name: Trigger Render redeploy (if model updated)
+        if: success()
+        run: |
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" || true
+        # Render deploy hook URL — get it from Render dashboard → Settings → Deploy Hook

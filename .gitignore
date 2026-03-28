@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Model files (stored on HuggingFace, not git)
+model.pkl
+version.txt
+
+# Data (download separately from Cricsheet)
+data/raw/
+data/*.csv
+
+# Streamlit secrets
+frontend/.streamlit/secrets.toml
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

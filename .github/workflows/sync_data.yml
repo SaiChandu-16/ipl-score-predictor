@@ -1,0 +1,35 @@
+name: Sync IPL Match Data (Cricsheet)
+
+on:
+  schedule:
+    # Run daily at 6AM UTC during IPL season (March–May)
+    # Cricsheet updates their ZIP within hours of each match
+    - cron: '0 6 * 3-5 *'     # March, April, May — every day at 6AM UTC
+    - cron: '0 6 * * 1'       # Off-season: every Monday (catches any late uploads)
+  workflow_dispatch:            # Manual trigger any time
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install supabase requests
+
+      - name: Sync new matches from Cricsheet
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python training/sync_match_data.py
+
+      - name: Log result
+        run: echo "Match data sync complete ✅"

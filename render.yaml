@@ -1,0 +1,21 @@
+# render.yaml — Render deployment config
+# Commit this to your repo root. Render auto-detects it.
+
+services:
+  - type: web
+    name: ipl-score-predictor-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free                    # Free tier
+    healthCheckPath: /health
+
+    envVars:
+      - key: SUPABASE_URL
+        sync: false               # Set manually in Render dashboard
+      - key: SUPABASE_KEY
+        sync: false
+      - key: HF_REPO_ID
+        sync: false
+      - key: HF_TOKEN
+        sync: false
