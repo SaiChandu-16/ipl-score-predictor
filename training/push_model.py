@@ -8,7 +8,7 @@ Usage:
 
 Run this after train.py to make the model available to the API.
 """
-
+from dotenv import load_dotenv
 import os
 import sys
 import logging
@@ -17,8 +17,14 @@ from huggingface_hub import HfApi, create_repo
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-HF_TOKEN  = os.environ.get("HF_TOKEN")
-HF_REPO_ID = os.environ.get("HF_REPO_ID", "your-username/ipl-score-predictor")
+# load .env file
+load_dotenv()
+
+# now read variables
+HF_TOKEN = os.getenv("HF_TOKEN")
+HF_REPO_ID = os.getenv("HF_REPO_ID", "your-username/ipl-score-predictor")
+# HF_TOKEN  = os.environ.get("HF_TOKEN")
+# HF_REPO_ID = os.environ.get("HF_REPO_ID", "your-username/ipl-score-predictor")
 
 
 def push():
