@@ -75,6 +75,14 @@ import logging
 import datetime
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.routers import admin
+app.include_router(admin.router, prefix="/admin", tags=["Admin"])
+# ```
+
+# Then add `ADMIN_SECRET` in **Render → Environment**:
+# ```
+# ADMIN_SECRET = any_strong_password_y
+
 
 from app.routers import predict, feedback, history, teams
 from app.services.model_service import load_model
