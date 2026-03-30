@@ -4,10 +4,10 @@ from enum import Enum
 
 
 class PitchType(str, Enum):
-    dry          = "Dry"
-    grassy       = "Grassy"
-    dusty        = "Dusty"
-    flat         = "Flat"
+    dry           = "Dry"
+    grassy        = "Grassy"
+    dusty         = "Dusty"
+    flat          = "Flat"
     spin_friendly = "Spin Friendly"
     pace_friendly = "Pace Friendly"
 
@@ -18,21 +18,23 @@ class TossDecision(str, Enum):
 
 
 class MatchInput(BaseModel):
-    batting_team:          str
-    bowling_team:          str
-    venue:                 str
-    playing_12:            List[str] = Field(..., min_length=11, max_length=12)
-    batting_team_players:  List[str]
-    bowling_team_players:  List[str]
-    pitch_type:            PitchType
-    pitch_hardness:        int = Field(..., ge=1, le=10)
-    dew_factor:            bool = False
-    toss_winner:           str
-    toss_decision:         TossDecision
-    match_time:            str = "Evening"
-    season:                int
+    batting_team:         str
+    bowling_team:         str
+    venue:                str
+    # ✅ max 24 = 12 per team; Pydantic v2 uses min_length/max_length for lists
+    playing_12:           List[str] = Field(..., min_length=11, max_length=24)
+    batting_team_players: List[str]
+    bowling_team_players: List[str]
+    pitch_type:           PitchType
+    pitch_hardness:       int = Field(..., ge=1, le=10)
+    dew_factor:           bool = False
+    toss_winner:          str
+    toss_decision:        TossDecision
+    match_time:           str = "Evening"
+    season:               int
 
-    model_config = {"use_enum_values": True}   # ✅ enums serialise as plain strings
+    # ✅ Enums serialise as plain strings — prevents Supabase JSONB insert errors
+    model_config = {"use_enum_values": True}
 
 
 class PredictionResponse(BaseModel):

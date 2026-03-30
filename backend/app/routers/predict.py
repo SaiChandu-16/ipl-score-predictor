@@ -12,11 +12,11 @@ logger = logging.getLogger(__name__)
 @router.post("/", response_model=PredictionResponse)
 async def make_prediction(data: MatchInput):
     try:
-        # ✅ Use model_dump(mode="json") — converts enums to plain strings
-        #    so Supabase can insert them into JSONB without serialization errors
+        # ✅ model_dump_json() + json.loads() guarantees all enums become
+        #    plain strings before hitting Supabase JSONB — no serialization errors
         input_dict = json.loads(data.model_dump_json())
 
-        result = predict_score(input_dict)
+        result        = predict_score(input_dict)
         model_version = get_model_version()
 
         prediction_id = save_prediction(
@@ -36,6 +36,6 @@ async def make_prediction(data: MatchInput):
         )
 
     except Exception as e:
-        # Log the full traceback so you can see the real error in Render logs
+        # ✅ Log full traceback — visible in Render logs
         logger.exception(f"Prediction failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))

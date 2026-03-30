@@ -202,10 +202,10 @@ with tab1:
                 bat_roles.setdefault(p.get("role", "Unknown"), []).append(p["name"])
             st.caption(" · ".join(f"{ROLE_EMOJI.get(r,'❓')} {r}: {len(ps)}" for r, ps in bat_roles.items()))
             batting_selected = st.multiselect(
-                f"Select {batting_team} players",
+                f"Select {batting_team} players (choose 11–12)",
                 options=player_names(batting_players_all),
-                default=player_names(batting_players_all)[:6],
-                max_selections=7, key="bat_players",
+                default=player_names(batting_players_all)[:11],
+                max_selections=12, key="bat_players",
             )
         else:
             st.warning(f"Could not load {batting_team} squad.")
@@ -218,12 +218,11 @@ with tab1:
             for p in bowling_players_all:
                 bowl_roles.setdefault(p.get("role", "Unknown"), []).append(p["name"])
             st.caption(" · ".join(f"{ROLE_EMOJI.get(r,'❓')} {r}: {len(ps)}" for r, ps in bowl_roles.items()))
-            available_bowl = [p["name"] for p in bowling_players_all if p["name"] not in batting_selected]
             bowling_selected = st.multiselect(
-                f"Select {bowling_team} players",
-                options=available_bowl,
-                default=available_bowl[:5],
-                max_selections=6, key="bowl_players",
+                f"Select {bowling_team} players (choose 11–12)",
+                options=player_names(bowling_players_all),
+                default=player_names(bowling_players_all)[:11],
+                max_selections=12, key="bowl_players",
             )
         else:
             st.warning(f"Could not load {bowling_team} squad.")
@@ -231,15 +230,21 @@ with tab1:
 
     playing_12 = batting_selected + bowling_selected
     total = len(playing_12)
-    color = "green" if total >= 11 else "orange" if total >= 9 else "red"
-    st.markdown(f"**Total selected:** :{color}[{total} / 12 players]")
+    bat_count  = len(batting_selected)  if "batting_selected"  in dir() else 0
+    bowl_count = len(bowling_selected) if "bowling_selected" in dir() else 0
+    bat_color  = "green" if bat_count  >= 11 else "orange" if bat_count  >= 9 else "red"
+    bowl_color = "green" if bowl_count >= 11 else "orange" if bowl_count >= 9 else "red"
+    st.markdown(f"**{batting_team}:** :{bat_color}[{bat_count}/12]  |  **{bowling_team}:** :{bowl_color}[{bowl_count}/12]")
 
     st.divider()
     predict_btn = st.button("🚀 Predict Score", type="primary", use_container_width=True)
 
     if predict_btn:
-        if len(playing_12) < 11:
-            st.error(f"Please select at least 11 players total (currently {len(playing_12)}).")
+        if len(batting_selected) < 11 or len(bowling_selected) < 11:
+            st.error(
+                f"Please select at least 11 players from each team. "
+                f"({batting_team}: {len(batting_selected)}, {bowling_team}: {len(bowling_selected)})"
+            )
         else:
             payload = {
                 "batting_team": batting_team, "bowling_team": bowling_team,
