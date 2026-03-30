@@ -75,32 +75,25 @@ import logging
 import datetime
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import admin
-app.include_router(admin.router, prefix="/admin", tags=["Admin"])
-# ```
 
-# Then add `ADMIN_SECRET` in **Render → Environment**:
-# ```
-# ADMIN_SECRET = any_strong_password_y
-
-
-from app.routers import predict, feedback, history, teams
+from app.routers import predict, feedback, history, teams, admin
 from app.services.model_service import load_model
 from app.services.cricket_data_service import (
     refresh_all_rosters,
-    get_rosters_last_updated
+    get_rosters_last_updated,
 )
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# ── App definition ────────────────────────────────────────────────────────────
 app = FastAPI(
     title="IPL Score Predictor API",
     description="Predict IPL innings scores with live team rosters and pitch reports.",
     version="2.0.0",
 )
 
-# CORS
+# ── CORS ──────────────────────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -109,12 +102,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── STARTUP EVENT (SAFE VERSION) ──────────────────────────────────────────────
+# ── Routers — ALL registered right after app is created ──────────────────────
+app.include_router(predict.router,  prefix="/predict",  tags=["Predict"])
+app.include_router(feedback.router, prefix="/feedback", tags=["Feedback"])
+app.include_router(history.router,  prefix="/history",  tags=["History"])
+app.include_router(teams.router,    prefix="/teams",    tags=["Teams & Rosters"])
+app.include_router(admin.router,    prefix="/admin",    tags=["Admin"])
+
+# ── Health & root ─────────────────────────────────────────────────────────────
+@app.get("/")
+def root():
+    return {"message": "IPL Score Predictor API v2 is live 🏏"}
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+# ── Startup event ─────────────────────────────────────────────────────────────
 @app.on_event("startup")
 async def startup_event():
     logger.info("🚀 Starting IPL Score Predictor API...")
 
-    # 1️⃣ Load ML model (SAFE)
+    # 1. Load ML model
     try:
         logger.info("Loading model from Hugging Face...")
         load_model()
@@ -122,7 +131,7 @@ async def startup_event():
     except Exception as e:
         logger.error(f"❌ Model loading failed: {e}")
 
-    # 2️⃣ Refresh rosters (SAFE + NO scraping in production)
+    # 2. Refresh rosters if stale
     try:
         last_updated = get_rosters_last_updated()
         should_refresh = True
@@ -131,7 +140,6 @@ async def startup_event():
             try:
                 last_dt = datetime.datetime.fromisoformat(last_updated)
                 age_hours = (datetime.datetime.utcnow() - last_dt).total_seconds() / 3600
-
                 if age_hours < 24:
                     logger.info(f"Rosters are fresh ({age_hours:.1f}h old). Skipping refresh.")
                     should_refresh = False
@@ -140,27 +148,8 @@ async def startup_event():
 
         if should_refresh:
             logger.info("Refreshing IPL rosters (safe mode)...")
-            # 🔥 IMPORTANT: disable scraping in deployment
             refresh_all_rosters(use_scraping=False)
             logger.info("✅ Rosters refreshed")
 
     except Exception as e:
         logger.warning(f"⚠️ Roster refresh failed: {e}")
-
-
-# ── ROUTERS ───────────────────────────────────────────────────────────────────
-app.include_router(predict.router,  prefix="/predict",  tags=["Predict"])
-app.include_router(feedback.router, prefix="/feedback", tags=["Feedback"])
-app.include_router(history.router,  prefix="/history",  tags=["History"])
-app.include_router(teams.router,    prefix="/teams",    tags=["Teams & Rosters"])
-
-
-# ── HEALTH & ROOT ─────────────────────────────────────────────────────────────
-@app.get("/")
-def root():
-    return {"message": "IPL Score Predictor API v2 is live 🏏"}
-
-
-@app.get("/health")
-def health():
-    return {"status": "ok"}
